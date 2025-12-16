@@ -11,9 +11,28 @@ import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import CaptureScreen from "./src/screens/CaptureScreen";
 import LoginScreen from "./src/screens/LoginScreen";
 import { retryAllPending } from "./src/services/QueueManager";
+import { checkHealth } from "./src/utils/api";
 
 function AppContent() {
   const { isSignedIn, isLoading } = useAuth();
+
+  // On first app start, verify backend is reachable
+  useEffect(() => {
+    (async () => {
+      try {
+        const isHealthy = await checkHealth();
+        if (isHealthy) {
+          console.log("✅ [App Init] Backend is reachable");
+        } else {
+          console.warn(
+            "⚠️ [App Init] Backend health check failed - uploads may not work"
+          );
+        }
+      } catch (err) {
+        console.warn("⚠️ [App Init] Could not verify backend:", err);
+      }
+    })();
+  }, []);
 
   // Listen for network reconnect and retry pending uploads
   useEffect(() => {

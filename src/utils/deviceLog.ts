@@ -1,6 +1,4 @@
 import * as SQLite from "expo-sqlite";
-
-const LOG_KEY = "device_logs";
 const MAX_LOGS = 500; // Keep last 500 logs on device
 
 export interface LogEntry {

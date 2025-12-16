@@ -1,9 +1,19 @@
 import { LocalAssetRecord, ServerUploadResponse } from "../types";
 import * as Network from "expo-network";
+import { API_CONFIG, LOG_CONFIG } from "../config";
+import { UploadResponse, isUploadSuccess } from "../api/contract";
 
-const API_BASE = "https://example.com/api"; // TODO: replace with actual backend
-const UPLOAD_TIMEOUT = 30000; // 30 seconds
-const USE_MOCK = true; // Set to false when you have a real backend
+// Use centralized config instead of hardcoded values
+const API_BASE = API_CONFIG.baseUrl;
+const USE_MOCK = API_CONFIG.useMock;
+const UPLOAD_TIMEOUT = API_CONFIG.uploadTimeoutMs;
+
+// Emit clear startup info so we can tell whether the app is using mock mode
+if (LOG_CONFIG.logApiCalls) {
+  console.log(
+    `ℹ️  API client mode: ${USE_MOCK ? "MOCK" : "REAL"}, baseUrl: ${API_BASE}`
+  );
+}
 
 export async function uploadPhoto(
   asset: LocalAssetRecord
@@ -94,5 +104,29 @@ export async function uploadPhoto(
       throw new Error("Upload timeout - please check your connection");
     }
     throw error;
+  }
+}
+
+/**
+ * Health check - verify backend is reachable and healthy
+ * Optional but recommended for debugging connection issues
+ */
+export async function checkHealth(): Promise<boolean> {
+  try {
+    const response = await fetch(
+      `${API_BASE.replace(/\/api\/?$/, "")}/health`,
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      }
+    );
+    return response.ok;
+  } catch (error) {
+    if (LOG_CONFIG.logApiCalls) {
+      console.log(`⚠️ [Health Check] Backend unreachable:`, error);
+    }
+    return false;
   }
 }

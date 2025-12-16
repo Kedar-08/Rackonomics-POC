@@ -8,12 +8,6 @@ export type QueueEventType = "changed" | "assetStatusChanged" | "retryAll";
 export function emitQueueChanged() {
   queueEvents.emit("changed");
 }
-
-export function emitAssetStatusChanged(assetId: number) {
-  queueEvents.emit("assetStatusChanged", assetId);
-  queueEvents.emit("changed");
-}
-
 export function emitRetryAll() {
   queueEvents.emit("retryAll");
 }
