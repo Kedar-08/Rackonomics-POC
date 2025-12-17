@@ -52,24 +52,26 @@ export default function CaptureScreen() {
       const asset = result.assets[0];
       const uri = asset.uri;
 
-      try {
-        await processAndQueueImage(
-          uri,
-          user,
-          async () => {
-            await onRefresh();
-          },
-          selectedCategory
-        );
-        console.log("✅ Photo captured and queued");
-      } catch (error) {
-        console.error("❌ Error processing image:", error);
-        Alert.alert(
-          "Upload Error",
-          `Failed to process photo: ${error instanceof Error ? error.message : String(error)}`,
-          [{ text: "OK" }]
-        );
-      }
+      // Process image in background so camera closes immediately
+      processAndQueueImage(
+        uri,
+        user,
+        async () => {
+          await onRefresh();
+        },
+        selectedCategory
+      )
+        .then(() => {
+          console.log("✅ Photo captured and queued");
+        })
+        .catch((error) => {
+          console.error("❌ Error processing image:", error);
+          Alert.alert(
+            "Upload Error",
+            `Failed to process photo: ${error instanceof Error ? error.message : String(error)}`,
+            [{ text: "OK" }]
+          );
+        });
     },
     [onRefresh, user, selectedCategory]
   );

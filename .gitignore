@@ -33,9 +33,6 @@ yarn-error.*
 # local env files
 .env*.local
 
-# Local uploads from mock server
-scripts/uploads/
-
 # typescript
 *.tsbuildinfo
 

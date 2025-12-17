@@ -254,6 +254,15 @@ function mapRow(r: any): LocalAssetRecord {
 export async function deleteAsset(id: number): Promise<void> {
   await execSql(`DELETE FROM assets WHERE id = ?`, [id]);
 }
+
+export async function updateLastAttemptTime(id: number): Promise<void> {
+  const now = Date.now();
+  await execSql(`UPDATE assets SET last_attempt_at = ? WHERE id = ?`, [
+    now,
+    id,
+  ]);
+}
+
 export async function resetUploadingAssets(): Promise<void> {
   // Reset any stuck "uploading" rows back to "pending"
   await execSql(

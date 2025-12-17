@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import * as Network from "expo-network";
-import { NETWORK_CONFIG } from "../config";
 
 export function useNetworkStatus() {
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
@@ -37,17 +36,12 @@ export function useNetworkStatus() {
             return;
           }
 
-          // For other errors (e.g., device offline), update state to offline
-          const now = Date.now();
-          if (now - lastLogTime > 30000 || !firstCheckDone) {
+          // For other errors, assume offline and continue
+          if (!firstCheckDone) {
             console.log(
-              "🔍 [useNetworkStatus] Network check failed, assuming OFFLINE"
+              "🔍 [useNetworkStatus] Assuming OFFLINE (network unavailable)"
             );
-            lastLogTime = now;
-          }
-          if (isMounted) {
             setIsOnline(false);
-            setLastCheck(now);
             firstCheckDone = true;
           }
           return;
@@ -75,57 +69,18 @@ export function useNetworkStatus() {
       }
     };
 
-    // Immediate event listener for reactive updates (fires on network changes)
-    let subscription: any = null;
-    try {
-      // Check if addNetworkStateListener exists before calling
-      if (typeof (Network as any).addNetworkStateListener === "function") {
-        subscription = (Network as any).addNetworkStateListener(
-          (state: any) => {
-            try {
-              if (!isMounted) return;
-              const now = Date.now();
-              console.log(
-                `🔔 [useNetworkStatus] listener: ${state.isConnected ? "ONLINE" : "OFFLINE"}`
-              );
-              setIsOnline(state.isConnected ?? false);
-              setLastCheck(now);
-              setCheckCount((c) => c + 1);
-              firstCheckDone = true;
-            } catch (err) {
-              // swallow listener errors
-            }
-          }
-        );
-      }
-    } catch (err) {
-      // If listener not supported or fails, fall back to polling
-      console.warn(
-        "⚠️ [useNetworkStatus] Listener install failed, falling back to polling",
-        err
-      );
-    }
-
-    // Start polling after a small delay to allow app to initialize
+    // Start checking after a small delay to allow app to initialize
     const initialDelay = setTimeout(() => {
       void checkStatus();
-    }, 250);
+    }, 500);
 
-    // Check at configured interval (fallback when listener isn't available)
-    const intervalMs = NETWORK_CONFIG.pollIntervalMs ?? 2000;
-    const interval = setInterval(checkStatus, Math.max(500, intervalMs));
+    // Check every 2 seconds (balanced performance vs responsiveness)
+    const interval = setInterval(checkStatus, 2000);
 
     return () => {
       isMounted = false;
       clearTimeout(initialDelay);
       clearInterval(interval);
-      try {
-        if (subscription && typeof subscription.remove === "function") {
-          subscription.remove();
-        }
-      } catch (err) {
-        // ignore
-      }
     };
   }, []);
 

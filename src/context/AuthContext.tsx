@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthContextType, AuthUser } from "../types";
-import { tokenStorage, isTokenExpired } from "../utils/tokenStorage";
+import {
+  tokenStorage,
+  decodeToken,
+  isTokenExpired,
+} from "../utils/tokenStorage";
 // Database imports removed for POC - using fake auth
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

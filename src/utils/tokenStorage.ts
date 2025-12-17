@@ -1,4 +1,5 @@
 import * as SecureStore from "expo-secure-store";
+import { AuthToken } from "../types";
 
 const TOKEN_KEY = "auth_token";
 const USER_KEY = "auth_user";
@@ -128,5 +129,22 @@ export const isTokenExpired = (token: string): boolean => {
   } catch (error) {
     console.error("Error checking token expiration:", error);
     return true;
+  }
+};
+
+/**
+ * Decode JWT token
+ */
+export const decodeToken = (token: string): any => {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+
+    const payload = parts[1];
+    const decoded = base64Utils.decode(payload);
+    return JSON.parse(decoded);
+  } catch (error) {
+    console.error("Error decoding token:", error);
+    return null;
   }
 };

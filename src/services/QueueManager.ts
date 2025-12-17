@@ -7,12 +7,12 @@ import {
   setPending,
   incrementRetryCapped,
   resetUploadingAssets,
+  updateLastAttemptTime,
 } from "../db/db";
 import { syncEventBus } from "./SyncEventBus";
-import { emitQueueChanged } from "./QueueEvents";
+import { emitQueueChanged, emitAssetStatusChanged } from "./QueueEvents";
 import { uploadPhoto } from "../utils/api";
 import * as Network from "expo-network";
-import { QUEUE_CONFIG } from "../config";
 import type {
   LocalAssetRecord,
   QueueMetrics,
@@ -23,6 +23,7 @@ import type {
 const MAX_CONCURRENT_UPLOADS = 3;
 const BATCH_SIZE = 5;
 const MAX_RETRIES = 5;
+const API_BASE_URL = "https://example.com"; // TODO: Replace with actual API
 
 export class QueueManager {
   private metrics$ = new BehaviorSubject<QueueMetrics>(
@@ -99,19 +100,12 @@ export class QueueManager {
       }
     } catch (networkError) {
       // Network check failed (likely permission denied)
-      if (QUEUE_CONFIG.allowProceedIfNetworkCheckFails) {
-        console.warn(
-          "⚠️ [processQueue] Network check failed, but allowProceedIfNetworkCheckFails=true so proceeding:",
-          networkError
-        );
-        canProceed = true;
-      } else {
-        console.warn(
-          "⚠️ [processQueue] Network check failed - treating as offline (not proceeding):",
-          networkError
-        );
-        return; // Do not proceed when network status cannot be verified
-      }
+      // Proceed anyway - let upload API fail if truly offline
+      console.warn(
+        "⚠️ [processQueue] Network check failed, proceeding anyway:",
+        networkError
+      );
+      canProceed = true;
     }
 
     this.isProcessing = true;
